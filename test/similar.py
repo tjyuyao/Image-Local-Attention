@@ -9,8 +9,8 @@ def check(a, b):
 
     
 def test_correct(h, w, c, kh, kw):
-    x1 = torch.rand(4, c, h, w).cuda()
-    y1 = torch.rand(4, c, h, w).cuda()
+    x1 = torch.rand(2, c, h, w).cuda()
+    y1 = torch.rand(2, c, h, w).cuda()
     x2 = x1.clone()
     y2 = y1.clone()
 
@@ -19,8 +19,8 @@ def test_correct(h, w, c, kh, kw):
     x2.requires_grad_()
     y2.requires_grad_()
 
-    z1 = TorchLocalAttention.f_similar(x1, y1, kh, kw)
-    z2 = f_similar(x2, y2, kh, kw)
+    z1 = TorchLocalAttention.f_similar(x1, y1, kh, kw, 2)
+    z2 = f_similar(x2, y2, kh, kw, 2)
 
     grad = torch.rand(z1.size()).cuda()
 
@@ -39,13 +39,13 @@ def test_efficiency_forward(h, w, c, kh, kw):
 
     with torch.no_grad():
         torch.cuda.reset_max_memory_allocated()
-        z = f_similar(x, y, kh, kw)
+        z = f_similar(x, y, kh, kw, 1)
         memory = torch.cuda.max_memory_allocated() / 1000000
         del z
 
     with torch.no_grad():
         torch.cuda.reset_max_memory_allocated()
-        z = TorchLocalAttention.f_similar(x, y, kh, kw)
+        z = TorchLocalAttention.f_similar(x, y, kh, kw, 1)
         memory_torch = torch.cuda.max_memory_allocated() / 1000000
         del z
 
@@ -53,7 +53,7 @@ def test_efficiency_forward(h, w, c, kh, kw):
         torch.cuda.synchronize()
         t = time.time()
         for i in range(3):
-            z = f_similar(x, y, kh, kw)
+            z = f_similar(x, y, kh, kw, 1)
         torch.cuda.synchronize()
         t = (time.time() - t) / 3
         del z
@@ -61,7 +61,7 @@ def test_efficiency_forward(h, w, c, kh, kw):
         torch.cuda.synchronize()
         t_torch = time.time()
         for i in range(3):
-            z = TorchLocalAttention.f_similar(x, y, kh, kw)
+            z = TorchLocalAttention.f_similar(x, y, kh, kw, 1)
         torch.cuda.synchronize()
         t_torch = (time.time() - t_torch) / 3
         del z

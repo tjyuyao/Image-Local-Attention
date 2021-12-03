@@ -14,17 +14,18 @@ __global__ void cc2k(
         const int height,
         const int width,
         const int per_channel,
+        const int dilate,
         dt *y
 ) {
     // x_ori, x_loc: {c, h, w}
     // y: {h, w, k^2}
     for (int indexO = blockIdx.x; indexO < per_channel; indexO += gridDim.x) {
-        const int w_ori = indexO % width - rW;
-        const int h_ori = indexO / width - rH;
+        const int w_ori = indexO % width - rW * dilate;
+        const int h_ori = indexO / width - rH * dilate;
 
         KERNEL_LOOP(indexK, patch) {
-            const int w = w_ori + indexK % kW;
-            const int h = h_ori + indexK / kW;
+            const int w = w_ori + indexK % kW * dilate;
+            const int h = h_ori + indexK / kW * dilate;
             dtc val = dtc(0);
 
             if (h > -1 && h < height && w > -1 && w < width) {
@@ -54,6 +55,7 @@ __global__ void ck2c_ori(
         const int width,
         const int per_channel,
         const int per_inp,
+        const int dilate,
         dt *y
 ) {
     // x_loc: {c, h, w}
@@ -61,15 +63,15 @@ __global__ void ck2c_ori(
     // y: {c, h, w}
     KERNEL_LOOP1d(index, per_inp) {
         const int index_ = index % per_channel;
-        const int w_ori = index_ % width - rW;
-        const int h_ori = index_ / width - rH;
+        const int w_ori = index_ % width - rW * dilate;
+        const int h_ori = index_ / width - rH * dilate;
         const dt *p_weight = x_weight + index_ * patch;
         const dt *p_loc = x_loc + index - index_;
         dtc val = dtc(0);
 
         for (int indexK = 0; indexK < patch; ++indexK) {
-            const int w = w_ori + indexK % kW;
-            const int h = h_ori + indexK / kW;
+            const int w = w_ori + indexK % kW * dilate;
+            const int h = h_ori + indexK / kW * dilate;
             if (h > -1 && h < height && w > -1 && w < width) {
                 val += static_cast<dtc> (__ldg(p_loc + width * h + w) *
                         __ldg(p_weight + indexK));
@@ -92,6 +94,7 @@ __global__ void ck2c_loc(
         const int width,
         const int per_channel,
         const int per_inp,
+        const int dilate,
         dt *y
 ) {
     // x_ori: {c, h, w}
@@ -99,14 +102,14 @@ __global__ void ck2c_loc(
     // y: {c, h, w}
     KERNEL_LOOP1d(index, per_inp) {
         const int index_ = index % per_channel;
-        const int w_ori = index_ % width + rW;
-        const int h_ori = index_ / width + rH;
+        const int w_ori = index_ % width + rW * dilate;
+        const int h_ori = index_ / width + rH * dilate;
         const dt *p_ori = x_ori + index - index_;
         dtc val = dtc(0);
 
         for (int indexK = 0; indexK < patch; ++indexK) {
-            const int w = w_ori - indexK % kW;
-            const int h = h_ori - indexK / kW;
+            const int w = w_ori - indexK % kW * dilate;
+            const int h = h_ori - indexK / kW * dilate;
             const int indexW = width * h + w;
 
             if (h > -1 && h < height && w > -1 && w < width) {
@@ -135,12 +138,13 @@ void f_cc2k(
         const int height,
         const int width,
         const int per_channel,
+        const int dilate,
         dt *y) {
     cc2k<dt, dtc> <<< min(per_channel, MAX_PIXELS_2d), CUDA_NUM_THREADS, 0, stream >>> (
             x_ori, x_loc,
                     kH, kW, rH, rW,
                     patch, channels,
-                    height, width, per_channel,
+                    height, width, per_channel, dilate,
                     y);
 }
 
@@ -159,12 +163,13 @@ void f_ck2c_ori(
         const int width,
         const int per_channel,
         const int per_inp,
+        const int dilate,
         dt *y) {
     ck2c_ori<dt, dtc> <<< GET_BLOCKS(min(per_inp, MAX_PIXELS_3d)), CUDA_NUM_THREADS, 0, stream >>> (
             x_loc, x_weight,
                     kH, kW, rH, rW,
                     patch, height, width,
-                    per_channel, per_inp,
+                    per_channel, per_inp, dilate,
                     y);
 
 }
@@ -184,11 +189,12 @@ void f_ck2c_loc(
         const int width,
         const int per_channel,
         const int per_inp,
+        const int dilate,
         dt *y) {
     ck2c_loc<dt, dtc> <<< GET_BLOCKS(min(per_inp, MAX_PIXELS_3d)), CUDA_NUM_THREADS, 0, stream >>> (
             x_ori, x_weight,
                     kH, kW, rH, rW,
                     patch, height, width,
-                    per_channel, per_inp,
+                    per_channel, per_inp, dilate,
                     y);
 }

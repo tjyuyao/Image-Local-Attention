@@ -3,7 +3,8 @@
 torch::Tensor similar_cuda_forward(
         const torch::Tensor &x_ori,
         const torch::Tensor &x_loc,
-        const int kH, const int kW
+        const int kH, const int kW,
+        const int dilate
 ) {
     TypeCheck(x_ori);
     TypeCheck(x_loc);
@@ -29,6 +30,7 @@ torch::Tensor similar_cuda_forward(
                 kH, kW, rH, rW,
                 patch, channels, height, width,
                 per_channel,
+                dilate,
                 output.data_ptr<float>() + start_out
         );
         start_inp += per_input;
@@ -44,6 +46,7 @@ torch::Tensor similar_cuda_backward(
         const torch::Tensor &x,
         const torch::Tensor &grad_out,
         const int kH, const int kW,
+        const int dilate,
         const bool is_ori
 ) {
     TypeCheck(x);
@@ -72,6 +75,7 @@ torch::Tensor similar_cuda_backward(
                     patch, channels,
                     height, width,
                     per_channel, per_input,
+                    dilate,
                     grad_inp.data_ptr<float>() + start_inp
             );
         } else {
@@ -83,6 +87,7 @@ torch::Tensor similar_cuda_backward(
                     patch, channels,
                     height, width,
                     per_channel, per_input,
+                    dilate,
                     grad_inp.data_ptr<float>() + start_inp
             );
         }

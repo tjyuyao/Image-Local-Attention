@@ -8,10 +8,12 @@ torch::Tensor similar_forward(
         const torch::Tensor &x_ori,
         const torch::Tensor &x_loc,
         const int kH,
-        const int kW) {
+        const int kW,
+        const int dilate
+        ) {
     return similar_cuda_forward(
             x_ori, x_loc,
-            kH, kW);
+            kH, kW, dilate);
 }
 
 torch::Tensor similar_backward(
@@ -19,10 +21,11 @@ torch::Tensor similar_backward(
         const torch::Tensor &grad_out,
         const int kH,
         const int kW,
+        const int dilate,
         const bool is_ori) {
     return similar_cuda_backward(
             x, grad_out,
-            kH, kW,
+            kH, kW, dilate,
             is_ori);
 }
 
@@ -31,30 +34,36 @@ torch::Tensor weighting_forward(
         const torch::Tensor &x_ori,
         const torch::Tensor &x_weight,
         const int kH,
-        const int kW) {
+        const int kW,
+        const int dilate
+        ) {
     return weighting_cuda_forward(
             x_ori, x_weight,
-            kH, kW);
+            kH, kW, dilate);
 }
 
 torch::Tensor weighting_backward_ori(
         const torch::Tensor &x_weight,
         const torch::Tensor &grad_out,
         const int kH,
-        const int kW) {
+        const int kW,
+        const int dilate
+        ) {
     return weighting_cuda_backward_ori(
             x_weight, grad_out,
-            kH, kW);
+            kH, kW, dilate);
 }
 
 torch::Tensor weighting_backward_weight(
         const torch::Tensor &x_ori,
         const torch::Tensor &grad_out,
         const int kH,
-        const int kW) {
+        const int kW,
+        const int dilate
+        ) {
     return weighting_cuda_backward_weight(
             x_ori, grad_out,
-            kH, kW);
+            kH, kW, dilate);
 }
 
 

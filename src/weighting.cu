@@ -3,7 +3,8 @@
 torch::Tensor weighting_cuda_forward(
         const torch::Tensor &x_ori,
         const torch::Tensor &x_weight,
-        const int kH, const int kW
+        const int kH, const int kW,
+        const int dilate
 ) {
     TypeCheck(x_ori);
     TypeCheck(x_weight);
@@ -30,6 +31,7 @@ torch::Tensor weighting_cuda_forward(
                 patch, channels,
                 height, width,
                 per_channel, per_input,
+                dilate,
                 output.data_ptr<float>() + start_inp
         );
         start_inp += per_input;
@@ -44,7 +46,8 @@ torch::Tensor weighting_cuda_forward(
 torch::Tensor weighting_cuda_backward_ori(
         const torch::Tensor &x_weight,
         const torch::Tensor &grad_out,
-        const int kH, const int kW
+        const int kH, const int kW,
+        const int dilate
 ) {
     TypeCheck(x_weight);
     const int batch = x_weight.size(0);
@@ -71,6 +74,7 @@ torch::Tensor weighting_cuda_backward_ori(
                 patch, channels,
                 height, width,
                 per_channel, per_input,
+                dilate,
                 grad_ori.data_ptr<float>() + start_inp
         );
         start_inp += per_input;
@@ -85,7 +89,8 @@ torch::Tensor weighting_cuda_backward_ori(
 torch::Tensor weighting_cuda_backward_weight(
         const torch::Tensor &x_ori,
         const torch::Tensor &grad_out,
-        const int kH, const int kW
+        const int kH, const int kW,
+        const int dilate
 ) {
     TypeCheck(x_ori);
     const int batch = x_ori.size(0);
@@ -112,6 +117,7 @@ torch::Tensor weighting_cuda_backward_weight(
                 patch, channels,
                 height, width,
                 per_channel,
+                dilate,
                 grad_weight.data_ptr<float>() + start_out
         );
         start_inp += per_input;

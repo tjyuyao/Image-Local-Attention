@@ -1,3 +1,6 @@
+import os
+os.environ["CUDA_VISIBLE_DEVICES"] = "1"
+
 import torch
 from torch.nn import functional as F
 from function import f_weighting, TorchLocalAttention
@@ -26,8 +29,8 @@ def f_torch(x_theta, x_phi, kh, kw):
 
 
 def test_correct(h, w, c, kh, kw):
-    x1 = torch.rand(4, c, h, w).cuda()
-    y1 = torch.rand(4, h, w, kh*kw).cuda()
+    x1 = torch.rand(2, c, h, w).cuda()
+    y1 = torch.rand(2, h, w, kh*kw).cuda()
     x2 = x1.clone()
     y2 = y1.clone()
 
@@ -36,8 +39,8 @@ def test_correct(h, w, c, kh, kw):
     x2.requires_grad_()
     y2.requires_grad_()
 
-    z1 = TorchLocalAttention.f_weighting(x1, y1, kh, kw)
-    z2 = f_weighting(x2, y2, kh, kw)
+    z1 = TorchLocalAttention.f_weighting(x1, y1, kh, kw, 2)
+    z2 = f_weighting(x2, y2, kh, kw, 2)
 
     grad = torch.rand(z1.size()).cuda()
 
